@@ -31,6 +31,17 @@ Two cars built with ams2kit, running in the game:
 | ![BYD Seal AWD in the showroom](docs/images/byd-seal-showroom.jpg) | ![BYD Seal AWD on the vehicle-select screen](docs/images/byd-seal-select.jpg) |
 | BYD Seal AWD (electric, dual motor): showroom | BYD Seal AWD: vehicle select, with its own menu stats and logo |
 
+### The toolkit
+
+A local web UI walks you through each step, from picking the donor to installing and testing the car:
+
+| | |
+|---|---|
+| ![Picking a donor car](docs/images/ui-car.png) | ![The Specs page](docs/images/ui-specs.png) |
+| **Car & donor:** start a project from any installed car | **Specs:** identity, powertrain (EV or ICE), chassis and tyres |
+| ![The Physics page](docs/images/ui-physics.png) | ![The Menu art page](docs/images/ui-art.png) |
+| **Physics:** every physics field, donor vs built value, with your overrides | **Menu art:** livery colours and car-select images rendered from your model |
+
 ## Requirements
 
 - **Windows** 10/11, 64-bit
