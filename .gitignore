@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Logs, screenshots, crash dumps
+*.log
+*.dmp
+*.png
+*.jpg
+!docs/**/*.png
+!docs/**/*.jpg
+!ams2kit/ui/static/**/*.png
+
+# Car projects and build output (contain data derived from the game)
+projects/
+kit_projects/
+build/
+dist/
+car.toml
+
+# Extracted game data and game file formats: never commit these
+*.bff
+*.meb
+*.dds
+*.vhf
+*.bml
+*.bmt
+*.mtx
+*.crd
+*.rg
+*.vdfm
+*.mrdf
+*.edfbin
+*.cdfbin
+*.gdfbin
+*.sdfbin
+*.cmfbin
+*.bbfbin
+*.tbfbin
+*.dat
+*.blend
+*.blend1
+*.glb
+*.gltf
+*.fbx
+*.obj
+*.npz
+*_extracted/
+research/
+phys/
+donor/
+exe_res/
+
+# Blender / tooling
+*.exe
+*.dll
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

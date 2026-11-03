@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ams2kit</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark"></span>ams2kit <small>car builder for Automobilista 2</small></div>
+  <div id="project-chip" class="chip hidden"></div>
+</header>
+<div class="layout">
+  <nav class="steps" id="steps">
+    <button data-step="setup">1<span>Setup</span></button>
+    <button data-step="car">2<span>Car &amp; donor</span></button>
+    <button data-step="model">3<span>3D model</span></button>
+    <button data-step="specs">4<span>Specs</span></button>
+    <button data-step="physics">5<span>Physics</span></button>
+    <button data-step="art">6<span>Menu art</span></button>
+    <button data-step="build">7<span>Build &amp; install</span></button>
+    <button data-step="test">8<span>Test</span></button>
+  </nav>
+  <main id="main"></main>
+</div>
+<section id="job" class="job hidden">
+  <div class="job-head"><span id="job-title"></span><span id="job-status"></span>
+    <button id="job-close" class="ghost small">Hide</button></div>
+  <pre id="job-log"></pre>
+</section>
+<script src="/static/app.js"></script>
+</body>
+</html>
