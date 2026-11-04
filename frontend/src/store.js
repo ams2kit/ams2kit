@@ -23,7 +23,7 @@ export const store = reactive({
   donors: null,     // /api/donors, loaded once
   // view state kept while switching steps
   carPicker: { filter: "", cls: "", sort: "class", donor: null },
-  physFilter: { kind: "", q: "", named: false, changed: false },
+  physFilter: { tab: "curves", kind: "", q: "", named: false, changed: false },
   doctor: null,     // last Check result, shown on Build
 });
 

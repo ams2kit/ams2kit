@@ -85,7 +85,11 @@ def physics_fields(path):
     pr = project_mod.Project(path)
     if not (pr.donor_dir / "donor.json").exists():
         return {"rows": [], "error": "Donor not unpacked yet."}
-    return {"rows": buildphys.physics_table(pr), "built": (pr.build_dir / "install").exists()}
+    try:
+        curves = buildphys.physics_curves(pr)
+    except Exception as e:      # the field table still works without the curve editors
+        curves = {"error": str(e)}
+    return {"rows": buildphys.physics_table(pr), "built": (pr.build_dir / "install").exists(), "curves": curves}
 
 
 def open_path(path, with_app=None):

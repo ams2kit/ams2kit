@@ -466,3 +466,38 @@ def physics_table(project):
                              "name": d.get("name") or "", "unit": d.get("unit") or "",
                              "help": d.get("desc") or "", "confidence": d.get("confidence") or ""})
     return rows
+
+
+def physics_curves(project):
+    """Physics page curve editors: the donor's torque table and gearing, the rolling radius the build
+    uses (same order as build_physics), and the last build's torque table (EVs: the computed motor)."""
+    from . import tyres as tyres_mod
+    pk = donor_mod.info(project)["physics_key"]
+    vdfm = donor_mod.file(project, f"vehicles\\physics\\vehicles\\{pk}.vdfm").read_bytes()
+    fields = vdfm_fields(vdfm)
+    dfile = lambda kind: donor_mod.file(project, "\\".join(("vehicles", "physics", PHYSICS_EXT[kind][0],
+                                                            f"{fields[PHYSICS_EXT[kind][2]]}.{PHYSICS_EXT[kind][1]}"))).read_bytes()
+    eng, gbx = P.Engine(dfile("engine")), P.Gearbox(dfile("gearbox"))
+    ch = project.cfg["chassis"]
+    axle = "front" if driveline_layout(project) == "FWD" else "rear"
+    radius, source = ch["wheel_radius_m"], "Specs rolling radius"
+    if not radius:
+        radius, source = tyres_mod.rolling_radius(project, vdfm, axle), "tyre size" if tyres_mod.project_sizes(project) else "donor tyre"
+    if not radius:
+        radius, source = donor_mod.tyre_radius(project), "donor tyre mesh"
+    if not radius:
+        radius, source = 0.33, "default"
+    bevel = gbx.bevel
+    fd = gbx.final_drive
+    out = {"donor_torque": [list(r) for r in eng.torque_curve()], "donor_rev_limit": eng.rev_limit,
+           "donor_gears": [round(r, 4) for r in gbx.ratios()],
+           "donor_final_drive": round(bevel[1] / bevel[0] * fd[1] / fd[0], 4),
+           "boost": bool(eng.boost_multipliers()),
+           "radius": round(radius, 4), "radius_source": source, "built_torque": None}
+    built = project.build_dir / "install" / "Vehicles" / "physics"
+    bvdfm = built / "vehicles" / f"{project.key}.vdfm"
+    if bvdfm.exists():
+        bf = built / "engines" / f"{vdfm_fields(bvdfm.read_bytes())[VDFM_ENGINE]}.edfbin"
+        if bf.exists():
+            out["built_torque"] = [list(r) for r in P.Engine(bf.read_bytes()).torque_curve()]
+    return out

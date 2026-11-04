@@ -87,3 +87,21 @@ code { background: #0e0e11; padding: 1px 5px; border-radius: 4px; font-size: 13p
 .phys input { font: 12px Consolas, monospace; min-width: 180px; }
 .phys input.set { border-color: var(--accent2); }
 .phys input.bad { border-color: var(--fail); }
+/* physics curve editors (components/TorqueEditor.vue, GearingEditor.vue; charts are vue-chartjs) */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.tabs button { all: unset; cursor: pointer; padding: 8px 14px; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button:hover { color: var(--text); }
+.tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+.help { font-size: 13px; color: var(--muted); margin: 0 0 8px; line-height: 1.45; }
+.help.warn::before { content: "\26A0  "; color: var(--warn); }
+.muted { color: var(--muted); }
+.ce-wrap { position: relative; margin: 6px 0 4px; }
+.ce-empty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; text-align: center;
+  background: rgba(29, 29, 33, .78); border-radius: var(--radius); }
+.ce-empty p { margin: 0; }
+.ce-foot { font-size: 13px; min-height: 34px; }
+.ce-foot input { padding: 4px 8px; }
+.ce-table { margin-top: 8px; font-size: 13px; }
+.ce-table summary { cursor: pointer; color: var(--muted); }
+.phys.gears { margin-top: 8px; }
+.phys.gears input { min-width: 0; padding: 3px 6px; }

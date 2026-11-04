@@ -3,6 +3,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import { api } from "../api.js";
 import { store, saveCfg } from "../store.js";
+import TorqueEditor from "../components/TorqueEditor.vue";
+import GearingEditor from "../components/GearingEditor.vue";
 
 const MAX_ROWS = 600;
 const F = store.physFilter;
@@ -55,9 +57,23 @@ async function setOverride(r, e) {
 
 <template>
   <h1>Physics</h1>
-  <p class="lead">Every setting in the car's physics files. <b>Donor</b> is the donor car's value, <b>Built</b> what the last build wrote
+  <p v-if="F.tab === 'fields'" class="lead">Every setting in the car's physics files. <b>Donor</b> is the donor car's value, <b>Built</b> what the last build wrote
     (after Specs), <b>Override</b> your value, applied last on Build. Leave an override empty to keep the built value.
     Lists keep the donor's length (e.g. <code>0.3, 0, 0</code>).</p>
+  <div class="tabs">
+    <button :class="{ active: F.tab === 'curves' }" @click="F.tab = 'curves'">Curves</button>
+    <button :class="{ active: F.tab === 'fields' }" @click="F.tab = 'fields'">All fields</button>
+  </div>
+  <template v-if="F.tab === 'curves'">
+    <p class="lead">Torque and gearing, drawn from Specs. Edits here change the Specs values and apply on the next Build.</p>
+    <div v-if="error || !data" class="card">{{ error || "Loading..." }}</div>
+    <div v-else-if="data.curves?.error" class="card">Curves unavailable: {{ data.curves.error }}</div>
+    <template v-else>
+      <div class="card"><TorqueEditor :curves="data.curves" /></div>
+      <div v-if="store.project.cfg.powertrain.type !== 'ev'" class="card"><GearingEditor :curves="data.curves" /></div>
+    </template>
+  </template>
+  <template v-else>
   <div class="row" style="margin-bottom:10px">
     <select v-model="F.kind" style="max-width:160px"><option value="">All files</option><option>engine</option><option>gearbox</option><option>chassis</option><option>suspension</option></select>
     <input v-model="F.q" placeholder="Search name or key..." style="max-width:260px">
@@ -87,4 +103,5 @@ async function setOverride(r, e) {
       </template>
     </table>
   </div>
+  </template>
 </template>
