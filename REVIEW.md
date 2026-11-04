@@ -63,7 +63,7 @@ progress). Good first issues are marked *(small)*.
 ## Structure / packaging ideas
 
 20. No `pyproject.toml`; the tool runs from the folder. A `pyproject.toml` with a console script would
-    allow `pipx install`. Note that `BPakFileEncryption.cs` and `ui/static/*` must be included as package data.
+    allow `pipx install`. Note that `BPakFileEncryption.cs` and `ui/static/**` (the built frontend) must be included as package data.
 21. Tests depend on data outside the repository (extracted game files, example car projects). A small
     synthetic fixture set (hand-made ShCB/meb/pak samples, no game data) would let CI run more than the
     pure-logic tests.

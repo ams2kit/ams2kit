@@ -34,7 +34,7 @@ The background research is in [`docs/`](docs/README.md); read those first.
 | `build.py`, `crd.py`, `art.py`, `liveries.py` | core | project → paks + mod files, menu art, plain-paint liveries |
 | `tyres.py` | core | tyre size: vdfm wheel block, base tyre sets, resized skinned tyre meshes (docs/13) |
 | `install.py`, `doctor.py`, `testing.py` (+ `telemetry.py`, `game_harness.py`) | core | install/validate/test |
-| `ui/` | core | local web UI (stdlib http server + static single page), `python -m ams2kit ui` |
+| `ui/` | core | local web UI (stdlib http server + a Vue page built from `frontend/` with Vite into `ui/static/`), `python -m ams2kit ui` |
 | `__main__.py` | core | CLI (see README) |
 
 Rules:

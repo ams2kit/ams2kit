@@ -29,6 +29,19 @@ python -m ams2kit                 # UI
 python -m unittest discover -s tests          # from the repository root
 ```
 
+### UI (frontend)
+
+The page is a Vue 3 app in `frontend/` (single-file components, built with Vite). Its build
+output in `ams2kit/ui/static/` is committed, so running ams2kit needs no Node; rebuild it whenever you
+change `frontend/` and commit both.
+
+```powershell
+cd frontend
+npm install
+npm run dev        # http://localhost:5173, proxies /api and /file to a running `python -m ams2kit ui`
+npm run build      # writes ams2kit/ui/static/
+```
+
 ## Tests
 
 Most tests need data that cannot be in the repository, and skip when it is missing:

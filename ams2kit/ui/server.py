@@ -10,8 +10,13 @@ from urllib.parse import parse_qs, urlparse
 
 from .. import actions, game, project as project_mod
 
-STATIC = Path(__file__).parent / "static"
+STATIC = Path(__file__).parent / "static"   # built from frontend/ by `npm run build`
 PORT = 8765
+
+# The page is an ES module, which browsers refuse unless served as JavaScript; on Windows `mimetypes`
+# reads the registry, where .js is often text/plain.
+mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
 
 
 class Job:
