@@ -49,6 +49,10 @@ A local web UI walks you through each step, from picking the donor to installing
 - **Python 3.11+** with `pillow` and `numpy`
 - **Blender 5.x** (for the `.blend` export/build and menu-image renders)
 
+The UI and the build tools also start on macOS and Linux (game and Blender detection, project files),
+but only Windows is tested. Running the game for the automated test and reading Oodle-compressed pak
+entries need Windows.
+
 ## Install
 
 ```powershell

@@ -1,11 +1,27 @@
 """Locate the game and Blender; list installed cars (the donor catalog)."""
-import json, os, re, shutil, winreg
+import json, os, re, shutil, sys
 from pathlib import Path
 
 from .paks import PakReader
 
 APP_ID = "1066890"
-DATA_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "ams2kit"
+WINDOWS = sys.platform == "win32"
+MACOS = sys.platform == "darwin"
+
+
+def _data_dir():
+    """Per-user settings and caches: %LOCALAPPDATA%\\ams2kit on Windows, ~/Library/Application Support/ams2kit
+    on macOS, $XDG_DATA_HOME/ams2kit (~/.local/share) elsewhere."""
+    if WINDOWS:
+        base = os.environ.get("LOCALAPPDATA") or Path.home()
+    elif MACOS:
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share"
+    return Path(base) / "ams2kit"
+
+
+DATA_DIR = _data_dir()
 CONFIG = DATA_DIR / "config.json"
 
 
@@ -21,19 +37,29 @@ def save_config(cfg):
     CONFIG.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
 
 
-def _steam_root():
-    for hive, key in ((winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
-                      (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam")):
-        try:
-            with winreg.OpenKey(hive, key) as k:
-                for name in ("SteamPath", "InstallPath"):
-                    try:
-                        return Path(winreg.QueryValueEx(k, name)[0])
-                    except OSError:
-                        pass
-        except OSError:
-            pass
-    return Path(r"C:\Program Files (x86)\Steam")
+def _steam_roots():
+    """Candidate Steam folders, most likely first. Windows reads the registry; Linux covers the native,
+    Debian-style and Flatpak installs (the game runs there through Proton)."""
+    if WINDOWS:
+        import winreg
+        roots = []
+        for hive, key in ((winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
+                          (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam")):
+            try:
+                with winreg.OpenKey(hive, key) as k:
+                    for name in ("SteamPath", "InstallPath"):
+                        try:
+                            roots.append(Path(winreg.QueryValueEx(k, name)[0]))
+                        except OSError:
+                            pass
+            except OSError:
+                pass
+        return roots + [Path(r"C:\Program Files (x86)\Steam")]
+    home = Path.home()
+    if MACOS:
+        return [home / "Library" / "Application Support" / "Steam"]
+    return [home / ".steam" / "steam", home / ".local" / "share" / "Steam", home / ".steam" / "debian-installation",
+            home / ".var" / "app" / "com.valvesoftware.Steam" / ".local" / "share" / "Steam"]
 
 
 def find_game():
@@ -41,11 +67,12 @@ def find_game():
     cfg = load_config()
     if cfg.get("game") and (Path(cfg["game"]) / "AMS2AVX.exe").exists():
         return Path(cfg["game"])
-    root = _steam_root()
-    libs = [root]
-    vdf = root / "steamapps" / "libraryfolders.vdf"
-    if vdf.exists():
-        libs += [Path(p.replace("\\\\", "\\")) for p in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(errors="ignore"))]
+    libs = []
+    for root in _steam_roots():
+        libs.append(root)
+        vdf = root / "steamapps" / "libraryfolders.vdf"
+        if vdf.exists():   # VDF escapes backslashes in Windows paths
+            libs += [Path(p.replace("\\\\", "\\")) for p in re.findall(r'"path"\s+"([^"]+)"', vdf.read_text(errors="ignore"))]
     for lib in libs:
         g = lib / "steamapps" / "common" / "Automobilista 2"
         if (g / "AMS2AVX.exe").exists():
@@ -53,14 +80,28 @@ def find_game():
     return None
 
 
+def _installed_blenders():
+    """Blender installs in the platform's usual place, oldest first."""
+    if WINDOWS:
+        base = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Blender Foundation"
+        found = list(base.glob("Blender */blender.exe"))
+        version = lambda p: p.parent.name
+    elif MACOS:
+        found = [p for a in (Path("/Applications"), Path.home() / "Applications")
+                 for p in a.glob("Blender*.app/Contents/MacOS/Blender")]
+        version = lambda p: p.parents[2].name
+    else:
+        return []   # Linux installs are on PATH (distro package, snap) or set by hand
+    return sorted(found, key=lambda p: [int(x) for x in re.findall(r"\d+", version(p))])
+
+
 def find_blender():
-    """The configured blender.exe, else %AMS2KIT_BLENDER%, else the newest Program Files install, else PATH."""
+    """The configured Blender, else %AMS2KIT_BLENDER%, else the newest standard install, else PATH."""
     cfg = load_config()
     for exe in (cfg.get("blender"), os.environ.get("AMS2KIT_BLENDER")):
         if exe and Path(exe).exists():
             return Path(exe)
-    base = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Blender Foundation"
-    found = sorted(base.glob("Blender */blender.exe"), key=lambda p: [int(x) for x in re.findall(r"\d+", p.parent.name)])
+    found = _installed_blenders()
     if found:
         return found[-1]
     on_path = shutil.which("blender")

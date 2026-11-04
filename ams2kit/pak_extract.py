@@ -49,6 +49,8 @@ def oodle_decompress(data, orig):
     global _oodle
     import ctypes
     if _oodle is None:
+        if not hasattr(ctypes, "WinDLL"):
+            raise RuntimeError("Oodle-compressed pak entries need Windows (the decoder is the game's oo2core_4_win64.dll)")
         _oodle = ctypes.WinDLL(_oodle_dll()).OodleLZ_Decompress
         _oodle.restype = ctypes.c_int64
         # src, srcLen, dst, dstLen, fuzzSafe, checkCRC, verbosity, decBufBase, decBufSize,

@@ -93,7 +93,11 @@ def open_path(path, with_app=None):
     if with_app == "blender":
         subprocess.Popen([str(game.find_blender()), str(p)])
     else:
-        os.startfile(p if p.is_dir() else p.parent)
+        folder = p if p.is_dir() else p.parent
+        if game.WINDOWS:
+            os.startfile(folder)
+        else:
+            subprocess.Popen(["open" if game.MACOS else "xdg-open", str(folder)])
     return {"ok": True}
 
 

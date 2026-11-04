@@ -6,11 +6,29 @@ drive. Pick the new car once in Custom Race by hand; after that every run uses i
 import csv, glob, os, subprocess, time
 from pathlib import Path
 
-from . import game_harness as gh, telemetry as tm
+from . import game
+
+
+class _Lazy:
+    """game_harness and telemetry call Win32 (window input, shared memory) when imported; load them on
+    first use so the rest of ams2kit imports on any OS."""
+    def __init__(self, name):
+        self._name, self._mod = name, None
+
+    def __getattr__(self, attr):
+        if self._mod is None:
+            if not game.WINDOWS:
+                raise RuntimeError("Driving the game (tests, menu screenshots) needs Windows.")
+            import importlib
+            self._mod = importlib.import_module(f".{self._name}", __package__)
+        return getattr(self._mod, attr)
+
+
+gh, tm = _Lazy("game_harness"), _Lazy("telemetry")
 
 RUN_ARGS = "-novr -windowed -doNotPauseOnFocusLoss -enableSharedMem -runTest 0"
 MENU_ARGS = "-novr -windowed -doNotPauseOnFocusLoss"
-DUMPS = os.path.expandvars(r"%LOCALAPPDATA%\Temp\AMS2AVX*.dmp")
+DUMPS = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Temp", "AMS2AVX*.dmp")
 MENU_SINGLE_RACE = (500, 360)       # main menu tile (1920x1080 frame)
 MENU_VEHICLE_PANEL = (640, 380)     # Custom Event -> Select Vehicle
 MENU_SHOWROOM = (1344, 954)         # Select Vehicle -> Showroom (3D view of the car)
