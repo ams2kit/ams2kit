@@ -27,7 +27,8 @@ async function setUseModel(e) {
       <li><b>Model your car in it</b>: import your model, line its wheels up with the <code>WHEEL_*</code> markers, move your meshes into the
         <code>REPLACE_*</code> objects (or rename yours to match), assign the donor's material slots to your faces (paint, glass, lights, rims), and
         delete donor parts you don't want. The README text block inside the file explains the details.</li>
-      <li><b>Save it as</b> <code>{{ p.cfg.model.blend }}</code> in the project folder.
+      <li><b>Save it as</b> <code>{{ p.cfg.model.blend }}</code> in the project folder, using that exact file name
+        (not your car's name; ams2kit looks for this file).
         <span class="status" style="margin-left:8px"><span class="dot" :class="p.car_blend ? 'ok' : 'warn'"></span>{{ p.car_blend ? "found" : "not saved yet" }}</span></li>
       <li><b>Build the game meshes</b> from your file.
         <div class="row" style="margin-top:8px">

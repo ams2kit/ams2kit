@@ -78,7 +78,8 @@ What to do
 7. Limits: a mesh may not exceed 65535 vertices (after splitting by normals/UVs); bigger meshes are
    decimated automatically. Keep the car within the GROUND_guide footprint: parts far outside the donor's
    bounding spheres may be culled at screen edges (the build reports this).
-8. Save as <project>/model/car.blend and run the ams2kit build.
+8. Save as <project>/model/car.blend (literally "car.blend", not your car's name) and run the
+   ams2kit build.
 """
 
 

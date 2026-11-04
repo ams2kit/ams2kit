@@ -14,7 +14,8 @@
    menu stats. Fields left at 0 keep the donor's value.
 5. **Model (optional):** click *Export donor .blend*. Open `<project>\model\donor_<car>.blend` in Blender,
    read the `AMS2KIT_README` text block, replace the donor's body with yours and save as
-   `<project>\model\car.blend`. Then *Build meshes*. Skip this step to keep the donor's body.
+   `<project>\model\car.blend`. Use exactly that name: the file is always `car.blend`, whatever your car
+   is called. Then *Build meshes*. Skip this step to keep the donor's body.
    Details: [04-meshes-and-render.md](04-meshes-and-render.md).
 6. **Physics (optional):** the Physics page lists every field of the donor's physics files; override any
    of them ([14-physics-fields.md](14-physics-fields.md)).
