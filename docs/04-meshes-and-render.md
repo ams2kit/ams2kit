@@ -278,4 +278,32 @@ Config: `research\jetta\jetta_fit.json`. Run script: `research\jetta\run_fit.py`
   the user deletes them.
 - Far-LOD decimation of many small objects is coarse.
 - Damage morphs are undeformed.
-- No user textures or materials yet: this needs a `.bmt` (BLMY) writer.
+
+## Your own textures: custom materials [proven]
+
+A car can use its own textures through a **clone of a donor material** (`ams2kit/materials.py`):
+
+```toml
+[materials.ATLAS]
+base = "VW_VIRTUS_MISC"              # donor material to clone: its shader and settings
+base_color = "textures/MaterialAtlas_C.png"
+roughness = "textures/MaterialAtlas_ORM_G.png"   # optional
+metallic = "textures/MaterialAtlas_ORM_B.png"    # optional
+normal = ""                                       # optional tangent-space normal map
+```
+
+- The clone is the donor's compiled `.bmt` with its name and texture paths swapped for strings of the
+  **same length**. The file's string table stays valid, so no BLMY writer is needed. It's saved at a
+  car-owned path (`vehicles\<car>\<name>.bmt`) with the car's DDS files (`vehicles\textures\<car>\`).
+- `ams2kit/textures.py` converts the PBR maps to the shader's inputs: diffuse, specular (RGB strength,
+  A gloss) and a flat or given normal map, as uncompressed DDS with mips.
+- In the fit config, map model materials to it with the class `CUSTOM:<NAME>`. Those faces keep the
+  model's own UVs instead of a flat colour sampled from a donor texture. Material atlases (a grid of
+  swatches, one per finish) come through intact: chrome, gloss black, coloured trims, badges.
+- Pick a base material with the same shader as the donor slot's material (e.g. the donor's misc/trim
+  material for body trim), so the slot's vertex layout suits it. Wheels: clone the donor rim material and
+  set `rim_custom_material` in the fit config.
+- **Use the images the way Blender shows them on your model**, e.g. saved from the `.blend` itself.
+  Texture files that came with a downloaded model can be stored upside down relative to its UVs (the Jetta's
+  were): colours then land on the wrong parts, such as cyan wheels or a silver accent stripe. Set
+  `flip_v = true` for such files.

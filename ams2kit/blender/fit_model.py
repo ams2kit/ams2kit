@@ -8,7 +8,8 @@ the donor's own UVs. Model-specific input comes from job['config'] (see ams2kit.
 
     exterior_root / exterior_objects / exterior_exclude   which model objects form the exterior
     wheel_objects {FL,FR,RL,RR: name}, tyre_materials, rim_materials
-    material_classes {model material: PAINT|GLASS|PLASTIC|GLOSS|LIGHT|SKIP}
+    material_classes {model material: PAINT|GLASS|PLASTIC|GLOSS|LIGHT|SKIP|CUSTOM:<NAME>}
+    custom_materials {NAME: car-owned .mtx} (ams2kit.materials): CUSTOM faces keep the model's UVs
     scale (None = from the wheelbase), rim_fit ('tyre' | 'donor_rim'), donor_materials, uv_hints, hide flags
 
 The model file is only APPENDED from (read-only). The result is saved to job['out_blend'].
@@ -397,6 +398,27 @@ def class_uv(mat, rule):
     return r[0] if r else (0.5, 0.5)
 
 
+CUSTOM = {}          # NAME -> Blender material for the car's own materials (CUSTOM:<NAME> classes)
+
+
+def custom_material(cfg, name, like):
+    """Blender material for car material NAME (its .mtx from cfg['custom_materials']); a copy of the donor
+    material `like` so it carries the same custom properties."""
+    if name in CUSTOM:
+        return CUSTOM[name]
+    mtx = (cfg.get('custom_materials') or {}).get(name) or (cfg.get('custom_materials') or {}).get(name.lower())
+    if not mtx:
+        raise SystemExit('material class CUSTOM:%s: no such entry in custom_materials (car.toml [materials])' % name)
+    m = like.copy()
+    m.name = mtx
+    m['ams2_mtx'] = mtx
+    for k in [k for k in m.keys() if k.startswith('ams2_uv')]:
+        del m[k]                                  # no texel hints: the faces keep their own UVs
+    CUSTOM[name] = m
+    log.setdefault('custom_materials', {})[name] = mtx
+    return m
+
+
 def set_face_uvs(obj, slot_uv):
     """Write one UV per material slot ({slot index: (u, v) D3D}) to obj's faces (TEXCOORD0 = active render map)."""
     if not slot_uv:
@@ -419,6 +441,27 @@ def set_face_uvs(obj, slot_uv):
         uv[loop_mat == idx] = (u, 1.0 - v)            # Blender v-up
         UV_WRITTEN.add(obj.material_slots[idx].material.name)
     uvl.data.foreach_set('uv', uv.ravel())
+
+
+def light_mask(ids):
+    """light_ids value (an id or a list of ids) -> bitmask of the candidate donor light ids."""
+    ids = [ids] if isinstance(ids, int) else ids
+    return sum(1 << int(i) for i in ids if 0 < int(i) < 31)
+
+
+def set_face_lights(obj, slot_light):
+    """ams2_light (face int): bitmask of the donor light ids the faces of these slots may take. The mesh
+    writer picks the id whose donor lamp is nearest (left/right) and writes it into the light-control stream."""
+    if not slot_light:
+        return
+    me = obj.data
+    mat = np.zeros(len(me.polygons), np.int32)
+    me.polygons.foreach_get('material_index', mat)
+    a = me.attributes.get('ams2_light') or me.attributes.new('ams2_light', 'INT', 'FACE')
+    val = np.zeros(len(me.polygons), np.int32)
+    for idx, mask in slot_light.items():
+        val[mat == idx] = mask
+    a.data.foreach_set('value', val)
 
 
 def main():
@@ -535,19 +578,31 @@ def main():
     wheel_names = {o.name for o in wheel_obj.values()}
     ext = [o for o in ext if o.name not in wheel_names and not matches(o.name, excl)]
     classes = dict(cfg.get('material_classes') or {})
+    light_ids = {k: light_mask(v) for k, v in (cfg.get('light_ids') or {}).items() if not k.startswith('_')}
     body_parts, light_parts = [], []
     guessed = {}
     for o in ext:
         cls_set = set()
-        slot_uv, skip_idx = {}, set()
+        slot_uv, skip_idx, slot_light = {}, set(), {}
         for i, sl in enumerate(o.material_slots):
             if sl.material is None or sl.material.get('ams2_mtx'):
                 continue
             nm = sl.material.name
+            if nm in light_ids:
+                slot_light[i] = light_ids[nm]
             cls = classes.get(nm)
             if cls is None:
                 cls = guessed.setdefault(nm, guess_class(nm))
             cls = cls.upper()
+            if cls.startswith('CUSTOM:'):
+                # the car's own material (materials.py): faces keep the model's UVs into its own texture.
+                # CUSTOM:<NAME>[:<CLASS>]: CLASS (default PLASTIC) picks where the part goes, e.g. LIGHT keeps
+                # it in the donor's lights mesh (the slot the game lights up when braking)
+                parts = cls.split(':')
+                slot_cls = parts[2] if len(parts) > 2 and parts[2] in dm else 'PLASTIC'
+                sl.material = custom_material(cfg, parts[1], dm[slot_cls])
+                cls_set.add(slot_cls)
+                continue
             base_cls = cls if cls in dm or cls == 'SKIP' else cls.split('_')[0]   # LIGHT_RED -> LIGHT material
             cls_set.add(base_cls)
             if cls == 'SKIP':
@@ -567,6 +622,7 @@ def main():
             bm.to_mesh(o.data)
             bm.free()
         set_face_uvs(o, slot_uv)
+        set_face_lights(o, slot_light)
         (light_parts if cls_set == {'LIGHT'} and donor['lights'] is not None else body_parts).append(o)
     if guessed:
         warn('model materials without a class, guessed from the name: %s' % guessed)
@@ -608,6 +664,30 @@ def main():
         ctx_join(cobj, copies)
         log.setdefault('cockpit_body', {})[cname] = {
             'model_objects': len(copies), 'tris': sum(len(p.vertices) - 2 for p in cobj.data.polygons), 'min_z': zmin}
+    # split_sides [model object patterns]: one object spanning both sides (e.g. both rear calipers) becomes
+    # <name>@L and <name>@R by face centre (left = +X in the donor .blend), so part_slots can target each side
+    for o in [o for o in body_parts if matches(o.name, cfg.get('split_sides') or [])]:
+        halves = []
+        for side, keep_left in (('@L', True), ('@R', False)):
+            h = o.copy()
+            h.data = o.data.copy()
+            bpy.context.scene.collection.objects.link(h)
+            bm = bmesh.new()
+            bm.from_mesh(h.data)
+            mw = h.matrix_world
+            bmesh.ops.delete(bm, geom=[f for f in bm.faces if ((mw @ f.calc_center_median()).x > 0) != keep_left],
+                             context='FACES')
+            bm.to_mesh(h.data)
+            bm.free()
+            h.name = o.name + side
+            if h.data.polygons:
+                halves.append(h)
+            else:
+                bpy.data.objects.remove(h, do_unlink=True)
+        body_parts.remove(o)
+        bpy.data.objects.remove(o, do_unlink=True)
+        body_parts.extend(halves)
+        log.setdefault('split_sides', {})[halves[0].name[:-2] if halves else '?'] = [h.name for h in halves]
     # part_slots {model object pattern: donor object}: those parts go into another donor body slot instead of
     # the main body (each .meb holds at most 65535 vertices; a detailed body is decimated otherwise)
     groups = {body.name: []}
@@ -666,10 +746,16 @@ def main():
         bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.material_index not in keep], context='FACES')
         bm.to_mesh(w.data)
         bm.free()
-        for sl in w.material_slots:
-            sl.material = dm['RIM']
-        if TEXELS:
-            set_face_uvs(w, {i: class_uv(dm['RIM'], 'RIM') for i in range(len(w.material_slots))})
+        if cfg.get('rim_custom_material'):
+            # the car's own rim material (a clone of the donor rim's): faces keep the model's UVs
+            cm = custom_material(cfg, cfg['rim_custom_material'], dm['RIM'])
+            for sl in w.material_slots:
+                sl.material = cm
+        else:
+            for sl in w.material_slots:
+                sl.material = dm['RIM']
+            if TEXELS:
+                set_face_uvs(w, {i: class_uv(dm['RIM'], 'RIM') for i in range(len(w.material_slots))})
         pts = world_verts(w)
         hub = bbox_centre(pts)
         r_model = max(((p.y - hub.y) ** 2 + (p.z - hub.z) ** 2) ** 0.5 for p in pts)

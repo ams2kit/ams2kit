@@ -288,6 +288,9 @@ def build(project, log=print):
                         new = f"vehicles\\physics\\{sub}\\{ckey}." + low[len(prefix):]
                         files.setdefault(new, phys.get(low) or e.data())
             files.update({p: f.read_bytes() for p, f in art.items()})
+            # [materials]: the car's own textures on clones of donor materials (materials.py)
+            from . import materials
+            files.update(materials.pak_files(project, log))
             if csd:
                 files[f"vehicles\\{ckey}\\{ckey}.csdbin"] = csd   # replaces the renamed donor copy
             extra += [paks.Entry.from_file(p, d, pak.entries[0].mtime) for p, d in files.items()]

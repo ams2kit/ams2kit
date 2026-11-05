@@ -63,12 +63,16 @@ DEFAULTS = {
         "liveries": {},            # livery id -> "#rrggbb" (plain paint; default palette otherwise)
         "livery_names": {},        # livery id -> colour name shown in game
         "render_azimuth": 34.0,
+        "render_blend": "",        # menu images from another .blend (e.g. the source model with its own materials)
+        "render_paint": [],        # its paint material names (livery colour); [] = names containing paint/livery
+        "render_front": "-Y",      # the way the rendered model faces: -Y (ams2kit) or +Y (many glTF imports)
     },
     "sound": {
         "kit": "",                 # car whose engine sound (csdbin + FMOD banks) the car uses; "" = the donor's
         "replace_samples": True,   # pack the WAVs in sound/replace/ into a copy of the kit's banks (sound.py)
     },
-    "overrides": {},               # any physics field: "chassis.<key>[#n]" = value or [values] (see Physics page)
+    "overrides": {},             # any physics field: "chassis.<key>[#n]" = value or [values] (see Physics page)
+    "materials": {},             # NAME -> {base, base_color, roughness, metallic, normal}: car's own textures (materials.py)
     "model": {"blend": "model/car.blend", "use_model": True,
               "own_meshes": True,         # meshes under the car's own names (donor car stays intact)
               "plain_liveries": True},    # liveries = plain paint colours (no donor designs)

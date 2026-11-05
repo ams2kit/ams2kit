@@ -29,9 +29,6 @@ gh, tm = _Lazy("game_harness"), _Lazy("telemetry")
 RUN_ARGS = "-novr -windowed -doNotPauseOnFocusLoss -enableSharedMem -runTest 0"
 MENU_ARGS = "-novr -windowed -doNotPauseOnFocusLoss"
 DUMPS = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Temp", "AMS2AVX*.dmp")
-MENU_SINGLE_RACE = (500, 360)       # main menu tile (1920x1080 frame)
-MENU_VEHICLE_PANEL = (640, 380)     # Custom Event -> Select Vehicle
-MENU_SHOWROOM = (1344, 954)         # Select Vehicle -> Showroom (3D view of the car)
 
 
 def steam_appid(gamedir, enable=None):
@@ -217,23 +214,11 @@ def track_run(gamedir, out_dir, name, seconds=120, shots=True, log=print, expect
     return res
 
 
-def menu_check(gamedir, out_dir, name, log=print):
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    kill()
-    launch(gamedir, MENU_ARGS)
-    time.sleep(75)
-    if not gh.game_pids():
-        return {"result": "game exited"}
-    gh.click(*MENU_SINGLE_RACE)
-    time.sleep(7)
-    gh.shot(str(out_dir / f"{name}_event.png"))
-    gh.click(*MENU_VEHICLE_PANEL)
-    time.sleep(7)
-    gh.shot(str(out_dir / f"{name}_select.png"))
-    gh.click(*MENU_SHOWROOM)
-    time.sleep(10)
-    gh.shot(str(out_dir / f"{name}_showroom.png"))
-    kill()
-    log("menu screenshots saved")
-    return {"result": "ok", **{k: str(out_dir / f"{name}_{k}.png") for k in ("event", "select", "showroom")}}
+def menu_check(gamedir, out_dir, name, log=print, car=None):
+    """Menu screenshots (Custom Event, Select Vehicle, Showroom + orbit frames), driven by reading the screen
+    (menu_nav: OCR, no fixed coordinates or waits). Refuses to run while the game is open."""
+    from . import menu_nav
+    res = menu_nav.showroom(out_dir, name, car=car, gamedir=gamedir, log=log)
+    if res.get("result") == "ok":
+        log("menu screenshots saved")
+    return res

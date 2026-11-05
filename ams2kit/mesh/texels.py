@@ -182,6 +182,34 @@ def pick(img, uvs, rule, min_share=0.002):
     return [round(uv[0], 6), round(uv[1], 6)], [round(float(x), 3) for x in rgba], src
 
 
+GLOW_RULES = {'LIGHT_GLOW': 'LIGHT', 'LIGHT_GLOW_RED': 'LIGHT_RED', 'LIGHT_GLOW_AMBER': 'LIGHT_AMBER'}
+
+
+def emissive_of(bmt_bytes):
+    return next((t for t in bmt_textures(bmt_bytes) if any(k in t.lower() for k in ('glow', 'emis'))), None)
+
+
+def pick_glow(img, glow, uvs, rule):
+    """Like pick() for lamp faces (LIGHT_GLOW*): the colour of the base rule on a texel that also glows in the
+    material's emissive map, so the face lights up when the game switches its light id on. The plain LIGHT*
+    rules stay for reflectors and trim, which must not glow."""
+    base = GLOW_RULES[rule]
+    g = 64
+    cand = []
+    if uvs is not None and len(uvs):
+        q = np.unique(np.floor((uvs % 1.0) * g).astype(np.int64), axis=0)
+        cand = [((x + 0.5) / g, (y + 0.5) / g) for x, y in q]
+    cand += [((x + 0.5) / g, (y + 0.5) / g) for y in range(g) for x in range(g)]
+    rgba = np.array([_sample(img, u, v) for u, v in cand])
+    lum = np.array([_sample(glow, u, v)[:3].max() for u, v in cand])
+    s = _score(base, rgba) + 2 * (1 - lum)
+    i = int(np.argmin(s))
+    if lum[i] < 0.5 or (score_rgb(base, rgba[i]) is not None and score_rgb(base, rgba[i]) > 0.9):
+        return None
+    return ([round(cand[i][0], 6), round(cand[i][1], 6)], [round(float(x), 3) for x in rgba[i]],
+            'texture+glow %.2f' % lum[i])
+
+
 def donor_texels(mesh_files, source, materials=None, rules=RULES, log=None):
     """{mtx lower: {...}} (module doc) for the donor materials used by mesh_files (or `materials`)."""
     uvs = material_uvs(mesh_files)
@@ -208,6 +236,19 @@ def donor_texels(mesh_files, source, materials=None, rules=RULES, log=None):
             r = pick(img, uvs.get(mtx_l), rule)
             if r is not None:
                 e[rule] = {'uv': r[0], 'rgba': r[1], 'source': r[2]}
+        gtex = emissive_of(bmt)
+        gdata = source.read(gtex) if gtex else None
+        if gdata is not None:
+            try:
+                glow = decode_dds(gdata)
+            except Exception:
+                glow = None
+            if glow is not None:
+                e['emissive'] = gtex
+                for rule in GLOW_RULES:
+                    r = pick_glow(img, glow, uvs.get(mtx_l), rule)
+                    if r is not None:
+                        e[rule] = {'uv': r[0], 'rgba': r[1], 'source': r[2]}
         out[mtx_l] = e
     return out
 

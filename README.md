@@ -77,7 +77,7 @@ Step-by-step guide and CLI equivalent: [docs/workflow.md](docs/workflow.md).
 
 Work in progress (v0.1.0). It works end to end for the donors it was developed with. Main gaps:
 
-- own textures/materials and livery designs are not supported (donor materials, plain colours);
+- own textures work through clones of donor materials; livery designs are not supported (plain colours);
 - interior and collision shape stay the donor's; engine sound can come from any car (samples
   replaceable, experimental);
 - electric cars are emulated through the engine model;

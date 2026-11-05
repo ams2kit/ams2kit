@@ -147,6 +147,13 @@ def object_arrays(obj, frame_inv, ratio):
             out['donor'] = (a[vidx] > 0).astype(np.int8)
         else:
             out['donor'] = np.zeros(len(corner), np.int8)
+        la = me.attributes.get('ams2_light')                      # fit_model: candidate light ids (bitmask)
+        if la is not None and la.domain == 'FACE' and la.data_type == 'INT' and nt:
+            a = np.zeros(len(me.polygons), np.int32)
+            la.data.foreach_get('value', a)
+            lp = np.zeros(nt, np.int32)
+            me.loop_triangles.foreach_get('polygon_index', lp)
+            out['light'] = np.repeat(a[lp], 3)
         mats = []
         props = {}
         for s in eo.material_slots:
@@ -180,8 +187,9 @@ def merge(parts):
         props.update(p['props'])
     keys_uv = sorted({k for p in parts for k in p if k.startswith('uv:') or k.startswith('attr:')})
     has_col = any('col' in p for p in parts)
+    has_light = any('light' in p for p in parts)
     out = {k: [] for k in ['pos', 'nrm', 'vidx', 'mat', 'donor', 'uv0', 'tan4', 'tan5', 'tanok'] + keys_uv +
-           (['col'] if has_col else [])}
+           (['col'] if has_col else []) + (['light'] if has_light else [])}
     off = 0
     for p in parts:
         nc = len(p['vidx'])
@@ -207,6 +215,8 @@ def merge(parts):
             else:
                 out['col'].append(np.full((nc, 4), 255, np.uint8))
                 donor[:] = 0
+        if has_light:
+            out['light'].append(p['light'] if 'light' in p else np.zeros(nc, np.int32))
         out['donor'].append(donor)
         off += p['nv']
     res = {k: np.concatenate(v) if v else np.zeros(0) for k, v in out.items()}

@@ -44,14 +44,20 @@ def colours(project):
 
 
 def render(project, blend=None, log=print):
-    blend = Path(blend or project.root / project.cfg["model"]["blend"])
+    """Menu images from the model. [art] render_blend: render another .blend (e.g. the source model with its own
+    materials) instead of model.blend; render_paint: its paint material names; render_front: "+Y" if it faces +Y."""
+    a = project.cfg["art"]
+    blend = Path(blend or project.root / (a.get("render_blend") or project.cfg["model"]["blend"])).resolve()
     if not blend.exists():
         raise FileNotFoundError(f"model not found: {blend}")
-    out = project.art_dir / "render"
+    out = (project.art_dir / "render").resolve()   # absolute: Blender resolves relative paths from the .blend's folder
     out.mkdir(parents=True, exist_ok=True)
     cols = [f"l{i}={','.join(f'{c:.4f}' for c in hex_to_linear(h))}" for i, h in colours(project).items()]
+    extra = [f"--front={a.get('render_front') or '-Y'}"]
+    if a.get("render_paint"):
+        extra.append("--paint=" + "|".join(a["render_paint"]))
     cmd = [str(game.find_blender()), "-b", str(blend), "--python", str(HERE / "blender" / "render_menu.py"), "--",
-           str(out), "2400", "900", str(project.cfg["art"]["render_azimuth"]), *cols]
+           str(out), "2400", "900", str(a["render_azimuth"]), *cols, *extra]
     log("rendering menu images in Blender...")
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0 or "WROTE" not in r.stdout:

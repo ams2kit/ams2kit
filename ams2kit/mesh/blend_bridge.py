@@ -370,6 +370,38 @@ class _Template:
         for ib in m.ibufs:
             self.mat_verts.setdefault(ib.material.lower(), set()).update(ib.indices)
         self._fits = {}
+        # light control: on lamp faces one TEXCOORD stream holds (light id, value) instead of a UV, e.g. the
+        # Virtus tail lamps (7/8), reverse (9/10), third brake light (12). The game lights faces by that id.
+        self.light_ids = {}          # k -> (N,) bool: donor vertices carrying a light id in TEXCOORDk
+        self.lights = {}             # k -> {id: (centroid xyz, value)}
+        for k, v in self.tc.items():
+            if v.shape[1] < 2:
+                continue
+            is_id = (np.abs(v[:, 0] - np.round(v[:, 0])) < 1e-4) & (v[:, 0] >= 1) & (v[:, 0] <= 30) & (v[:, 1] < 0)
+            if is_id.any():
+                self.light_ids[k] = is_id
+                ids = np.round(v[is_id, 0]).astype(int)
+                self.lights[k] = {int(i): (self.pos[is_id][ids == i].mean(0), float(np.median(v[is_id, 1][ids == i])))
+                                  for i in np.unique(ids)}
+
+    def light_value(self, k, mask, p):
+        """(id, value) for a new lamp vertex at p: among the candidate ids in mask, the donor lamp nearest p
+        (so a left/right id pair resolves by side). None when this donor mesh has none of those ids."""
+        cand = [(np.sum((c - p) ** 2), i, val) for i, (c, val) in self.lights.get(k, {}).items() if mask >> i & 1]
+        return min(cand)[1:] if cand else None
+
+    def nearest_plain(self, mtx, k, p):
+        """TEXCOORDk of the nearest donor vertex of mtx that is not a lamp (no light id), for new faces of a
+        light-controlled material that are not lamps: a straight-line fit of ids would give fractional ids."""
+        sel = self.sel(mtx)
+        sel = sel[~self.light_ids[k][sel]]
+        if not len(sel):
+            return None
+        P, out = self.pos[sel], np.zeros((len(p), self.tc[k].shape[1]))
+        for a in range(0, len(p), 512):
+            d2 = ((p[a:a + 512, None, :] - P[None, :, :]) ** 2).sum(-1)
+            out[a:a + 512] = self.tc[k][sel[d2.argmin(1)]]
+        return out
 
     def sel(self, mtx):
         s = self.mat_verts.get(mtx.lower())
@@ -484,6 +516,8 @@ def build_meb_from_dump(tmpl, d, meta, out_name, warnings):
                 ok = False
         return out, ok
 
+    lamp = np.asarray(d['light'], np.int64)[first] if 'light' in d else np.zeros(nv, np.int64)
+    missing_lights = set()
     tcs = {}
     for s in m0.streams:
         if s.semantic != 3:
@@ -504,8 +538,23 @@ def build_meb_from_dump(tmpl, d, meta, out_name, warnings):
                     cv = _floats(mode, out_name, mtx, warnings)
                     if cv:
                         pred[:, :min(len(cv), comps)] = cv[:comps]
+                if k in tmpl.light_ids and mode == 'fit':
+                    lit = lamp[sel] > 0
+                    if tmpl.light_ids[k][tmpl.sel(mtx)].any() and (~lit).any():
+                        near = tmpl.nearest_plain(mtx, k, pos[sel][~lit])
+                        if near is not None:
+                            pred[~lit, :near.shape[1]] = near[:, :comps]
+                    for j in np.flatnonzero(lit):
+                        lv = tmpl.light_value(k, int(lamp[sel][j]), pos[sel][j])
+                        if lv is None:
+                            missing_lights.add(int(lamp[sel][j]))
+                        else:
+                            pred[j, :2] = lv
                 vals[sel] = pred
         tcs[k] = vals
+    if missing_lights:
+        warnings.append('%s: light ids %s are not in this donor slot (lamp faces left unlit)' % (
+            out_name, sorted({i for m_ in missing_lights for i in range(31) if m_ >> i & 1})))
     if 0 in tcs:
         uv_t = tcs[0][:, :2]
     else:
@@ -759,7 +808,9 @@ FIT_DEFAULTS = {
     'wheel_objects': None,        # {'FL': name, 'FR': ..., 'RL': ..., 'RR': ...} (front of the model at -Y)
     'tyre_materials': [],         # model materials of the tyres (wheel centres = their bbox centre)
     'rim_materials': [],          # model materials that make up the rim (the rest of each wheel is dropped)
-    'material_classes': {},       # model material -> PAINT|GLASS|PLASTIC|GLOSS|LIGHT|SKIP (unknown: guessed)
+    'rim_custom_material': None,  # NAME of a car material (custom_materials) for the rims: they keep their UVs
+    'material_classes': {},       # model material -> PAINT|GLASS|PLASTIC|GLOSS|LIGHT|SKIP|CUSTOM:<NAME> (unknown: guessed)
+    'custom_materials': {},       # {NAME: car-owned .mtx path} (materials.mtx_paths): CUSTOM:<NAME> faces keep their UVs
     'scale': None,                # None: from the wheelbase (model wheels onto the WHEEL_* empties)
     'rim_fit': 'tyre',            # 'tyre': rim radius = donor tyre inner radius + flange overlap; 'donor_rim'
     'rim_flange_overlap': 0.005,
@@ -770,6 +821,9 @@ FIT_DEFAULTS = {
     'rotate_z_deg': 0.0,          # turn the model about Z first; 0 + auto_orient: 180 when it faces +Y (glTF)
     'auto_orient': True,
     'part_slots': {},             # {model object pattern: donor body object}: spread a big body over several slots
+    'split_sides': [],            # model object patterns split into <name>@L / <name>@R (left = +X) for part_slots
+    'light_ids': {},              # model material -> donor light id(s) its faces switch with (brake, reverse...);
+                                  # a list (e.g. [7, 8]) resolves left/right by the nearest donor lamp (docs/04)
     'cockpit_body': {},           # {donor *_cpit object: {objects: [patterns], min_z: m}}: body seen from the seat
     'interior': None,             # optional: model interior -> donor interior/cockpit slots (fit_model.fit_interior)
 }
@@ -777,7 +831,7 @@ FIT_DEFAULTS = {
 
 def fit_model_into_donor(donor_blend, model_blend, out_blend, *, config=None, scale=None, wheel_objects=None,
                          material_classes=None, rim_fit=None, blender_exe=None, work_dir=None, timeout=1800,
-                         texels=None):
+                         texels=None, custom_materials=None):
     """Put a car model (any .blend, front at -Y, Z up, metres) into an exported donor .blend and save out_blend.
 
     config: dict or path of a JSON file with the model-specific inputs (keys: FIT_DEFAULTS); keyword arguments
@@ -789,7 +843,7 @@ def fit_model_into_donor(donor_blend, model_blend, out_blend, *, config=None, sc
             config = json.load(fh)
     cfg.update(config or {})
     for k, v in (('scale', scale), ('wheel_objects', wheel_objects), ('material_classes', material_classes),
-                 ('rim_fit', rim_fit)):
+                 ('rim_fit', rim_fit), ('custom_materials', custom_materials)):
         if v is not None:
             cfg[k] = v
     work = work_dir or tempfile.mkdtemp(prefix='ams2fit_')
