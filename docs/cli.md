@@ -15,6 +15,7 @@
 | `doctor <project>` | Validate a build (registry, CRCs, names, physics layout, tyres...). |
 | `install <project>` | Copy the build into the game and register its paks (with a receipt). |
 | `uninstall <project>` | Remove exactly the files the install wrote and unregister the paks. |
+| `share <project>` | Zip the last build with an installer for friends: `build\share\<Name>.zip` ([safety](safety.md#sharing-a-car)). |
 | `test <project> [seconds]` | Start the game, let the AI drive, log telemetry, take screenshots. |
 | `menu <project>` | Start the game and screenshot the car-select menus. |
 | `tyres <project> [size [rear]] [--race]` | Donor/Specs tyre sizes and the closest base tyre sets. |

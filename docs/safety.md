@@ -15,6 +15,19 @@ Install writes the following, and records every file in a receipt
 
 It refuses to overwrite any existing file it did not write itself.
 
+## Sharing a car
+
+*Share* (Build & install page, or `python -m ams2kit share <project>`) zips the last build into
+`<project>\build\share\<Name>.zip`. It refuses when Check reports a failure. Your friend needs only the
+game: they extract the zip and run `install.bat` (Windows PowerShell does the work). The installer makes
+the same changes as Install above: it copies the files, adds the paks to `PakDirInfo.dat` (backed up once
+next to it as `PakDirInfo.dat.ams2kit-backup`), and refuses to overwrite any file it did not write. It
+records its files in `UserData\Mods\<Name>\ams2kit-share-files.txt`, so `uninstall.bat` removes exactly
+those. The zip's `README.txt` explains this to your friend.
+
+The zip contains data derived from your game installation (the donor's files). Share it only with
+people who own the game, and only where the game's terms and your model's licence allow it.
+
 ## Other changes (only when you use the feature)
 
 - *Setup → steam_appid.txt*: creates/removes `steam_appid.txt` next to `AMS2AVX.exe`.

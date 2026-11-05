@@ -23,6 +23,7 @@
    **Sound (optional):** use another car's engine sound, or replace single samples of it with your own WAVs
    ([16-sound.md](16-sound.md)).
 8. **Build**, then **Check** (the Doctor; fix anything it reports), then **Install**.
+   **Share** makes `build\share\<Name>.zip` for friends: they extract it and run `install.bat`.
 9. **Test:** start one Custom Race with your car by hand once (so the game remembers it), then run
    *Test* to let the AI drive and collect telemetry. Or start the game normally and find your car in its
    class.

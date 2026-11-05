@@ -34,6 +34,12 @@ First public version.
   a copy of the bank as PCM and installed under `Audio\AMS2KIT\<car>\` (docs/16).
 - Doctor checks the csdbin's engine banks exist and warns about cars sharing a replaced bank.
 
+### Sharing
+
+- Share (`share`, Build & install page): `build\share\<Name>.zip` with a PowerShell installer and
+  uninstaller (copies the files, registers the paks with precomputed `PakDirInfo.dat` entries, keeps a
+  receipt) and a README, so friends can install a car without ams2kit.
+
 ### Release preparation
 
 - Removed hard-coded personal paths: Blender is auto-detected (`game.find_blender()`: Setup,

@@ -3,7 +3,7 @@
   ui [--port N] [--no-browser]       local web UI (default)
   donors [filter]                    list installed cars usable as donors
   new <dir> <Name> <Donor>           create a project and unpack the donor
-  build|art|render|doctor|install|uninstall|test|menu|export-blend|build-meshes <project dir>
+  build|art|render|doctor|install|uninstall|share|test|menu|export-blend|build-meshes <project dir>
   dump <physics file>                print a ShCB physics file as text
   tyres <project dir> [size] [--race] tyre sizes (donor / Specs) and the base tyre sets closest to them
   sounds [filter]                    list the cars whose engine sound a car can use ([sound] kit)

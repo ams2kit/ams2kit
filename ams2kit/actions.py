@@ -69,6 +69,7 @@ def project_info(path):
         "test_results": [json.loads(Path(f).read_text()) for f in _files(tests, "*.json")][-5:],
         "shots": _files(tests, "*.png")[-6:],
         "installed": any(r["name"] == pr.name for r in install.installed()),
+        "share_zip": str(pr.build_dir / "share" / f"{pr.name}.zip") if (pr.build_dir / "share" / f"{pr.name}.zip").exists() else None,
     }
     return info
 
@@ -217,6 +218,11 @@ def job(action, body):
         return lambda log: doctor.check(pr, _game())
     if action == "install":
         return lambda log: install.install(pr, _game(), log)
+    if action == "share":
+        def fn(log):
+            from . import share
+            return share.share(pr, game.find_game(), log)
+        return fn
     if action == "uninstall":
         return lambda log: install.uninstall(pr.name, _game(), log)
     if action == "test":
