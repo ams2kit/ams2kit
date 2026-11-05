@@ -21,6 +21,10 @@ First public version.
 - Doctor checks; install/uninstall with receipts and a registry backup.
 - Automated in-game test (AI drive, telemetry, screenshots, crash detection) and menu screenshots.
 - Local web UI and CLI.
+- Physics page "Curves" tab: drag-to-edit torque curve (with derived power, rev-limit handle and the
+  donor's curve for reference) and gearing chart (rpm vs road speed, drag a gear to change its ratio).
+  Both edit the Specs values (`torque_curve`, `rev_limit`, `gears`, `final_drive`). Charts use
+  vue-chartjs (Chart.js) with chartjs-plugin-dragdata.
 
 ### Sound
 

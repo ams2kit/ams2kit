@@ -67,3 +67,6 @@ exe_res/
 .idea/
 Thumbs.db
 desktop.ini
+
+# tools/mock_ui.py sample projects
+mock_projects/
