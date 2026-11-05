@@ -106,3 +106,16 @@ code { background: #0e0e11; padding: 1px 5px; border-radius: 4px; font-size: 13p
 .ce-table summary { cursor: pointer; color: var(--muted); }
 .phys.gears { margin-top: 8px; }
 .phys.gears input { min-width: 0; padding: 3px 6px; }
+.guide-tabs { flex-wrap: wrap; }
+.md { line-height: 1.55; max-width: 900px; }
+.md h1 { font-size: 20px; margin: 4px 0 10px; }
+.md h2 { font-size: 17px; margin: 22px 0 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.md h3 { font-size: 15px; margin: 16px 0 6px; }
+.md p, .md li { color: var(--text); }
+.md ul, .md ol { padding-left: 22px; }
+.md li { margin: 3px 0; }
+.md table { border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+.md th, .md td { border: 1px solid var(--line); padding: 5px 10px; text-align: left; vertical-align: top; }
+.md th { background: var(--panel2); }
+.md pre { background: #0e0e11; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow: auto; }
+.md pre code { background: none; padding: 0; font-size: 12.5px; }

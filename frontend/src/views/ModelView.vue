@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { api } from "../api.js";
 import { store, saveCfg } from "../store.js";
 import { runJob } from "../job.js";
+import PortingGuide from "../components/PortingGuide.vue";
 
 const p = computed(() => store.project);
 const donorBlend = computed(() => p.value.donor_blend[0]);
@@ -42,4 +43,7 @@ async function setUseModel(e) {
     <span class="status">Untick to build with the donor's body (useful for a first physics test).</span>
     <button class="ghost small" @click="api('/api/open', { path: p.path + '/model' })">Open project folder</button>
   </div>
+  <h2 class="section">Porting guide</h2>
+  <p class="lead">What we learned porting real car models: the fit config, materials, wheels, lights, interior and how to check the result in game.</p>
+  <div class="card"><PortingGuide /></div>
 </template>

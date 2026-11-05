@@ -5,6 +5,7 @@
 | File | Covers |
 |---|---|
 | [workflow.md](workflow.md) | Adding a car step by step (UI and CLI), project layout |
+| [porting/](porting/README.md) | Porting a car model: source model, donor and fit, body, materials, wheels, lights, interior, menu art, testing (also shown on the UI's 3D Model page) |
 | [cli.md](cli.md) | Every command of `python -m ams2kit` |
 | [safety.md](safety.md) | What ams2kit changes in the game folder, backups, uninstalling |
 | [known-limitations.md](known-limitations.md) | Work in progress and known limitations |
