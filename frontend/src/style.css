@@ -87,3 +87,4 @@ code { background: #0e0e11; padding: 1px 5px; border-radius: 4px; font-size: 13p
 .phys input { font: 12px Consolas, monospace; min-width: 180px; }
 .phys input.set { border-color: var(--accent2); }
 .phys input.bad { border-color: var(--fail); }
+.phys audio { height: 32px; width: 230px; display: block; }

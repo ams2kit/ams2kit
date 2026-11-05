@@ -18,6 +18,8 @@
 | `test <project> [seconds]` | Start the game, let the AI drive, log telemetry, take screenshots. |
 | `menu <project>` | Start the game and screenshot the car-select menus. |
 | `tyres <project> [size [rear]] [--race]` | Donor/Specs tyre sizes and the closest base tyre sets. |
+| `sounds [filter]` | List the cars whose engine sound a car can use (`[sound] kit`). |
+| `sound-extract <project>` | Decode the kit's engine banks to `sound\original\` as WAVs ([16](16-sound.md)). |
 | `dump <physics file>` | Print a ShCB physics file (`.edfbin`, `.cdfbin`, ...) as text. |
 
 Commands print a log and finish with a JSON result.
@@ -31,6 +33,7 @@ Developer entry points with their own usage in the module docstring:
 | Variable | Effect |
 |---|---|
 | `AMS2KIT_BLENDER` | `blender.exe` to use when none is set in Setup. |
+| `AMS2KIT_VGMSTREAM` | `vgmstream-cli` to decode Vorbis sound samples when none is set in Setup. |
 | `AMS2KIT_INDEPENDENT`, `AMS2KIT_RENAME_COLLISION` | Force car-named physics / collision for one build ([12](12-physics-names.md)). |
 | `AMS2KIT_NO_COCKPIT_BIN` | Build without a cockpit properties file ([10](10-cockpit-bin.md)). |
 | `AMS2KIT_GAME`, `AMS2KIT_TEST_WORK`, `AMS2KIT_TEST_MODEL`, `AMS2KIT_TEST_FIT` | Test data locations ([CONTRIBUTING](../CONTRIBUTING.md)). |

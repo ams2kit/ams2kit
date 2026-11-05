@@ -64,6 +64,10 @@ DEFAULTS = {
         "livery_names": {},        # livery id -> colour name shown in game
         "render_azimuth": 34.0,
     },
+    "sound": {
+        "kit": "",                 # car whose engine sound (csdbin + FMOD banks) the car uses; "" = the donor's
+        "replace_samples": True,   # pack the WAVs in sound/replace/ into a copy of the kit's banks (sound.py)
+    },
     "overrides": {},               # any physics field: "chassis.<key>[#n]" = value or [values] (see Physics page)
     "model": {"blend": "model/car.blend", "use_model": True,
               "own_meshes": True,         # meshes under the car's own names (donor car stays intact)

@@ -2,7 +2,7 @@
 import json, os, subprocess
 from pathlib import Path
 
-from . import art, build, doctor, donor, game, install, project as project_mod, testing
+from . import art, build, doctor, donor, game, install, project as project_mod, sound, testing
 
 
 def _game():
@@ -20,12 +20,13 @@ def state(projects_root, projects):
         "steam_appid": testing.steam_appid(g) if g else False,
         "projects_root": str(projects_root), "projects": projects,
         "installed": install.installed(), "data_dir": str(game.DATA_DIR),
+        "vgmstream": str(sound.find_vgmstream() or "") or None,
     }
 
 
 def save_settings(body):
     cfg = game.load_config()
-    for k in ("game", "blender", "projects"):
+    for k in ("game", "blender", "projects", "vgmstream"):
         if body.get(k):
             cfg[k] = body[k]
     game.save_config(cfg)
@@ -86,6 +87,36 @@ def physics_fields(path):
     if not (pr.donor_dir / "donor.json").exists():
         return {"rows": [], "error": "Donor not unpacked yet."}
     return {"rows": buildphys.physics_table(pr), "built": (pr.build_dir / "install").exists()}
+
+
+def sound_kits(refresh=False):
+    return {"kits": sound.kits(_game(), refresh=refresh)}
+
+
+def sound_info(path):
+    """Sound page: the kit, its extracted samples (sound/kit.json) and which ones have a replacement."""
+    pr = project_mod.Project(path)
+    info = sound.kit_info(pr)
+    reps = sound.replacements(pr)
+    root = sound.sound_dir(pr)
+    if info:
+        for short, b in info["banks"].items():
+            for r in b["samples"]:
+                o = root / "original" / short / r["file"]
+                r["original"] = str(o) if o.exists() else None
+                hit = reps.get(short, {}).get(r["name"])
+                r["replacement"] = str(hit[1]) if hit else None
+    return {"kit": sound.kit_name(pr), "extracted": info, "stale": bool(info) and info["kit"].lower() != sound.kit_name(pr).lower(),
+            "dir": str(root), "replaced": sum(len(v) for v in reps.values()), "vgmstream": bool(sound.find_vgmstream())}
+
+
+def remove_replacement(path, bank, file):
+    pr = project_mod.Project(path)
+    folder = (sound.sound_dir(pr) / "replace" / Path(bank).name).resolve()
+    f = (folder / Path(file).name).resolve()
+    if f.parent == folder and f.suffix.lower() == ".wav" and f.exists():
+        f.unlink()
+    return {"ok": True}
 
 
 def open_path(path, with_app=None):
@@ -168,6 +199,10 @@ def job(action, body):
             log(f"{len(manifest)} meshes")
             return {"meshes": len(manifest)}
         return fn
+    if action == "sound_extract":
+        return lambda log: {"banks": list(sound.extract(pr, _game(), log)["banks"])}
+    if action == "sound_kits":
+        return lambda log: {"kits": len(sound.kits(_game(), refresh=True, log=log))}
     if action == "render":
         return lambda log: {"dir": str(art.render(pr, log=log))}
     if action == "art":

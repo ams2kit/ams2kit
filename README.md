@@ -12,7 +12,7 @@ It has a local web UI and a command line.
 
 **What it does:** donor clone · your own meshes via a Blender `.blend` round trip · EV or ICE powertrain ·
 mass, CG, wheelbase, tracks · tyre sizes · plain-paint liveries, logo and menu images · physics field
-editor and overrides · build checks (Doctor) · install/uninstall with receipts · automated in-game test
+editor and overrides · engine sound from any car, with your own samples · build checks (Doctor) · install/uninstall with receipts · automated in-game test
 with telemetry.
 
 ## Screenshots
@@ -78,7 +78,8 @@ Step-by-step guide and CLI equivalent: [docs/workflow.md](docs/workflow.md).
 Work in progress (v0.1.0). It works end to end for the donors it was developed with. Main gaps:
 
 - own textures/materials and livery designs are not supported (donor materials, plain colours);
-- interior, engine sound and collision shape stay the donor's;
+- interior and collision shape stay the donor's; engine sound can come from any car (samples
+  replaceable, experimental);
 - electric cars are emulated through the engine model;
 - tested on a handful of donors only; game updates can break it.
 

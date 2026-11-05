@@ -9,10 +9,11 @@ import ModelView from "./views/ModelView.vue";
 import SpecsView from "./views/SpecsView.vue";
 import PhysicsView from "./views/PhysicsView.vue";
 import ArtView from "./views/ArtView.vue";
+import SoundView from "./views/SoundView.vue";
 import BuildView from "./views/BuildView.vue";
 import TestView from "./views/TestView.vue";
 
-const VIEWS = { setup: SetupView, car: CarView, model: ModelView, specs: SpecsView, physics: PhysicsView, art: ArtView, build: BuildView, test: TestView };
+const VIEWS = { setup: SetupView, car: CarView, model: ModelView, specs: SpecsView, physics: PhysicsView, art: ArtView, sound: SoundView, build: BuildView, test: TestView };
 
 const locked = step => step.needsProject && !store.project;
 // a remembered step whose project is gone falls back to Setup

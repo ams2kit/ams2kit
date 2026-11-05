@@ -41,6 +41,7 @@ These are working notes for future user tutorials, not a tutorial yet. Every cla
 | [12-physics-names.md](12-physics-names.md) | Why vdfm renames crashed (section pad check), car-named physics (`independent` mode) |
 | [13-tyres.md](13-tyres.md) | Where the tyre size lives (vdfm wheel block), tyre sets, resizing the skinned tyre meshes |
 | [14-physics-fields.md](14-physics-fields.md) | Key hash cracked (lookup2 of the upper-case rF-style name); field dictionary for every physics file; BYD calibration fields |
+| [16-sound.md](16-sound.md) | The `.csdbin` sound setup, FMOD bank and FSB5 layout, FADPCM, sound kits and replacing samples |
 
 ### The approach that works: clone a donor car
 

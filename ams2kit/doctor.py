@@ -59,6 +59,34 @@ def _check_tyres(project, gamedir, vb, tyre_set, donor_set, add):
                 f"rear {w['RL']['width']:.3f}/{w['RL']['diameter']:.3f} m (width/diameter)")
 
 
+def _check_sound(project, gamedir, add):
+    """The built csdbin must name banks that exist in the game or in our install tree (docs/16)."""
+    from . import sound
+    csd_file = project.build_dir / "install" / "Vehicles" / project.key / f"{project.key}.csdbin"
+    if not csd_file.exists():
+        return
+    try:
+        banks = sound.csd_banks(csd_file.read_bytes())
+    except ValueError as e:
+        add(FAIL, f"csdbin unreadable: {e}")
+        return
+    inst = project.build_dir / "install"
+    # only the engine banks: base cars also name shared banks that aren't in the game (Audio/Surface/WindBuffeting)
+    missing = [b for b in banks if b.startswith(sound.ENGINE_BANKS + (sound.MOD_BANKS,))
+               and not (sound.bank_file(gamedir, b).exists() or sound.bank_file(inst, b).exists())]
+    if missing:
+        add(FAIL, f"csdbin names FMOD banks that don't exist (no engine sound): {missing}")
+    else:
+        add(OK, f"sound: {sound.kit_name(project)}'s ({len(banks)} banks found)")
+    ours = [b for b in banks if b.startswith(sound.MOD_BANKS)]
+    if ours:
+        info = sound.kit_info(project) or {"banks": {}}
+        same = sorted({c for b in ours for c in sound.cars_using(gamedir, info["banks"].get(b.rsplit("/", 1)[-1], {}).get("path", ""))})
+        add(WARN, f"replaced samples: the rebuilt banks keep the FMOD ids of the originals, so don't race this car in the "
+                  f"same session as {', '.join(same) or sound.kit_name(project)} (the game loads only one of the two; "
+                  "experimental, docs/16)")
+
+
 def check(project, gamedir=None):
     gamedir = Path(gamedir or game.find_game())
     res = []
@@ -108,6 +136,7 @@ def check(project, gamedir=None):
                       "the car will effectively keep the donor's layout. Pick a donor with the layout you want.")
     except Exception:
         pass
+    _check_sound(project, gamedir, add)
     # images / logo
     art = project.art_dir / "manifest.json"
     add(OK if art.exists() else WARN, "menu art present" if art.exists() else "No car-select images or logo yet (menu shows the donor's / a white box).")

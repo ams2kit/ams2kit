@@ -219,7 +219,14 @@ def build(project, log=print):
     for p, f in tyres_mod.write_resized_tyres(project, out / "tyres", log).items():
         meshes.setdefault(p, f)
     art = art_manifest(project)
-    report = {"physics": names, "meshes": len(meshes), "art": len(art), "paks": {}}
+    # [sound]: another car's sound setup and/or the kit's banks with replaced samples (sound.py, docs/16)
+    from . import sound
+    csd, sound_banks = (None, {})
+    if project.cfg["sound"]["kit"] or sound.replacements(project):
+        from . import game as game_mod
+        csd, sound_banks = sound.build_files(project, game_mod.find_game(), log)
+    report = {"physics": names, "meshes": len(meshes), "art": len(art), "paks": {},
+              "sound": {"kit": sound.kit_name(project), "banks": sorted(sound_banks)}}
 
     # car-owned mesh paths: donor path -> vehicles\<car>\<car>_<file>. With them the donor car keeps its
     # own look while our paks are mounted (writing at donor paths gave the real donor our body)
@@ -281,6 +288,8 @@ def build(project, log=print):
                         new = f"vehicles\\physics\\{sub}\\{ckey}." + low[len(prefix):]
                         files.setdefault(new, phys.get(low) or e.data())
             files.update({p: f.read_bytes() for p, f in art.items()})
+            if csd:
+                files[f"vehicles\\{ckey}\\{ckey}.csdbin"] = csd   # replaces the renamed donor copy
             extra += [paks.Entry.from_file(p, d, pak.entries[0].mtime) for p, d in files.items()]
         if kind == "cockpit":
             # the cockpit model the retargeted .bin names must exist in the car's folder; renamed
@@ -354,6 +363,10 @@ def build(project, log=print):
         from . import game as game_mod
         with paks.PakReader(game_mod.find_game() / "Pakfiles" / "PHYSICSPERSISTENT.bff") as r:
             game_rg = r.read(donor_mod.DRIVELINE).decode("latin-1")
+    for rel, data in sound_banks.items():   # rebuilt banks: loose under Audio\AMS2KIT\<car>\
+        dst = inst.joinpath(*rel.split("/"))
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_bytes(data)
     for fname, text in crd.mod_files(project, (project.donor_dir / "driveline.rg").read_text(encoding="latin-1"), game_rg).items():
         (mod / fname).write_text(text, encoding="utf-8")
     car_dir = inst / "Vehicles" / ckey

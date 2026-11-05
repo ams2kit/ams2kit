@@ -20,6 +20,8 @@
 6. **Physics (optional):** the Physics page lists every field of the donor's physics files; override any
    of them ([14-physics-fields.md](14-physics-fields.md)).
 7. **Art:** pick livery colours, add a logo PNG, render the car-select images.
+   **Sound (optional):** use another car's engine sound, or replace single samples of it with your own WAVs
+   ([16-sound.md](16-sound.md)).
 8. **Build**, then **Check** (the Doctor; fix anything it reports), then **Install**.
 9. **Test:** start one Custom Race with your car by hand once (so the game remembers it), then run
    *Test* to let the AI drive and collect telemetry. Or start the game normally and find your car in its
@@ -34,6 +36,8 @@ python -m ams2kit new "C:\cars\My_Car" My_Car BMW_M4_GT3
 python -m ams2kit export-blend "C:\cars\My_Car"      # optional: donor .blend for your model
 python -m ams2kit build-meshes "C:\cars\My_Car"      # after saving model\car.blend
 python -m ams2kit art     "C:\cars\My_Car"
+python -m ams2kit sounds v8                          # optional: [sound] kit = "<car>" in car.toml
+python -m ams2kit sound-extract "C:\cars\My_Car"     # optional: kit samples -> sound\original\
 python -m ams2kit build   "C:\cars\My_Car"
 python -m ams2kit doctor  "C:\cars\My_Car"
 python -m ams2kit install "C:\cars\My_Car"
@@ -50,6 +54,7 @@ All commands: [cli.md](cli.md).
   donor/            unpacked donor (plain paks, physics, crd, driveline record)
   model/            donor_<car>.blend (exported) and car.blend (yours)
   art/              logo + rendered car-select images
+  sound/            extracted kit samples (original/) and your replacements (replace/<bank>/)
   build/            generated physics, meshes, paks, mod files, test results
 ```
 

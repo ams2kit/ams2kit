@@ -22,6 +22,14 @@ First public version.
 - Automated in-game test (AI drive, telemetry, screenshots, crash detection) and menu screenshots.
 - Local web UI and CLI.
 
+### Sound
+
+- Sound kits: a car can use any installed car's engine sound (`[sound] kit`, Sound step, `sounds`).
+- Sample replacement (experimental): `sound-extract` decodes the kit's engine banks to WAVs (FADPCM
+  natively, Vorbis through an optional `vgmstream-cli`); WAVs in `sound/replace/<bank>/` are packed into
+  a copy of the bank as PCM and installed under `Audio\AMS2KIT\<car>\` (docs/16).
+- Doctor checks the csdbin's engine banks exist and warns about cars sharing a replaced bank.
+
 ### Release preparation
 
 - Removed hard-coded personal paths: Blender is auto-detected (`game.find_blender()`: Setup,

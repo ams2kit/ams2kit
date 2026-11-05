@@ -9,6 +9,7 @@ export const STEPS = [
   { id: "specs", label: "Specs", needsProject: true },
   { id: "physics", label: "Physics", needsProject: true },
   { id: "art", label: "Menu art", needsProject: true },
+  { id: "sound", label: "Sound", needsProject: true },
   { id: "build", label: "Build & install", needsProject: true },
   { id: "test", label: "Test", needsProject: true },
 ];

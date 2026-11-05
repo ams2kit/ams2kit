@@ -124,6 +124,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, actions.donors(refresh=q.get("refresh") == "1"))
             if u.path == "/api/project":
                 return self._send(200, actions.project_info(q["path"]))
+            if u.path == "/api/sound/kits":
+                return self._send(200, actions.sound_kits(refresh=q.get("refresh") == "1"))
+            if u.path == "/api/sound":
+                return self._send(200, actions.sound_info(q["path"]))
             if u.path == "/api/physics":
                 return self._send(200, actions.physics_fields(q["path"]))
             if u.path == "/api/job":
@@ -143,18 +147,24 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         try:
-            if u.path == "/api/upload":   # raw body -> <project>/art/<name>
+            if u.path == "/api/upload":   # raw body -> <project>/art/<name>, or a replacement sample
                 pr = project_mod.Project(q["path"])
                 name = Path(q["name"]).name
                 dst = pr.art_dir / name
+                if q.get("bank"):           # -> <project>/sound/replace/<bank>/<name>.wav
+                    if not name.lower().endswith(".wav"):
+                        return self._send(400, {"error": "replacement samples must be .wav files"})
+                    dst = pr.root / "sound" / "replace" / Path(q["bank"]).name / name
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.write_bytes(self._body())
-                return self._send(200, {"saved": str(dst), "rel": f"art/{name}"})
+                return self._send(200, {"saved": str(dst), "rel": dst.relative_to(pr.root).as_posix()})
             body = json.loads(self._body() or b"{}")
             if u.path == "/api/settings":
                 return self._send(200, actions.save_settings(body))
             if u.path == "/api/project/save":
                 return self._send(200, actions.save_project(body["path"], body["cfg"]))
+            if u.path == "/api/sound/remove":
+                return self._send(200, actions.remove_replacement(body["path"], body["bank"], body["file"]))
             if u.path == "/api/open":
                 return self._send(200, actions.open_path(body["path"], body.get("with")))
             if u.path == "/api/job":

@@ -6,8 +6,11 @@
 - **Game updates can break it.** The file formats were worked out by hand.
 - **Materials:** your model must use the donor's materials. Own textures/materials are not supported yet
   (needs a `.bmt` writer). Liveries are plain colours only (no designs or decals).
-- **Interior and sound** stay the donor's unless you replace the interior meshes; the engine sound is
-  always the donor's.
+- **Interior** stays the donor's unless you replace the interior meshes.
+- **Sound:** any car's engine sound can be used, and samples can be replaced, but no new FMOD events
+  (RPM layers, effects). A car with replaced samples must not race alongside the cars that share that
+  engine bank, and the Vorbis samples need `vgmstream-cli` to be extracted ([16](16-sound.md)).
+  Neither has been tested in game yet.
 - **No native EV.** Electric cars are emulated through the engine model; the menu has no EV engine label
   ([11](11-electric-drive.md)).
 - **Collision shape** is the donor's.

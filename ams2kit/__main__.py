@@ -6,6 +6,8 @@
   build|art|render|doctor|install|uninstall|test|menu|export-blend|build-meshes <project dir>
   dump <physics file>                print a ShCB physics file as text
   tyres <project dir> [size] [--race] tyre sizes (donor / Specs) and the base tyre sets closest to them
+  sounds [filter]                    list the cars whose engine sound a car can use ([sound] kit)
+  sound-extract <project dir>        decode the kit's banks to <project>/sound/original/ (docs/16)
 """
 import json, sys
 from pathlib import Path
@@ -25,6 +27,12 @@ def main(argv):
             if flt in (c["name"] + c["display"] + c["cls"]).lower():
                 print(f"{c['name']:40s} {c['cls']:18s} {c['display']}")
         return
+    if cmd == "sounds":
+        flt = argv[1].lower() if len(argv) > 1 else ""
+        for k in actions.sound_kits()["kits"]:
+            if flt in (k["name"] + k["display"] + k["engine"]).lower():
+                print(f"{k['name']:40s} {k['cls']:18s} {k['engine']}")
+        return
     if cmd == "new":
         root, name, donor = Path(argv[1]), argv[2], argv[3]
         fn = actions.job("new_project", {"root": str(root.parent if root.name == name else root), "name": name, "donor": donor})
@@ -42,7 +50,7 @@ def main(argv):
             pr.cfg["chassis"]["tyre_size"], pr.cfg["chassis"]["tyre_size_rear"] = args[0], (args[1] if len(args) > 1 else "")
         print(tyres.report(pr, game.find_game(), road="--race" not in argv))
         return
-    action = {"export-blend": "export_blend", "build-meshes": "build_meshes"}.get(cmd, cmd)
+    action = {"export-blend": "export_blend", "build-meshes": "build_meshes", "sound-extract": "sound_extract"}.get(cmd, cmd)
     res = actions.job(action, {"path": argv[1], **({"seconds": argv[2]} if len(argv) > 2 else {})})(print)
     print(json.dumps(res, indent=1, default=str))
 

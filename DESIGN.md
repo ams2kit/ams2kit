@@ -14,6 +14,7 @@ The background research is in [`docs/`](docs/README.md); read those first.
    (or keeps editing the same file).
 5. **Specs:** power, torque, rev limit or EV, gears, mass, wheelbase/track, CG, top speed, menu stats.
 6. **Art:** livery colours, logo file, and car-select images rendered from the .blend.
+   **Sound:** pick a sound kit (any car's engine sound) and optionally replace its samples.
 7. **Build, then Doctor, then Install, then Test** (automated in-game run + menu screenshots).
 
 ## Package layout (`ams2kit/`)
@@ -32,6 +33,7 @@ The background research is in [`docs/`](docs/README.md); read those first.
 | `mesh/meb_read.py`, `mesh/meb_write.py` | mesh | .meb format |
 | `mesh/blend_bridge.py` (+ `donor_layout.py`, `vhf_nodes.py`, `meshweld.py`, `texels.py`) + `blender/*.py` | mesh | donor → .blend export, model fit, .blend → .meb build (docs/04) |
 | `build.py`, `crd.py`, `art.py`, `liveries.py` | core | project → paks + mod files, menu art, plain-paint liveries |
+| `sound.py` | core | sound kits (another car's csdbin), FMOD bank/FSB5 read, FADPCM decode, sample replacement (docs/16) |
 | `tyres.py` | core | tyre size: vdfm wheel block, base tyre sets, resized skinned tyre meshes (docs/13) |
 | `install.py`, `doctor.py`, `testing.py` (+ `telemetry.py`, `game_harness.py`) | core | install/validate/test |
 | `ui/` | core | local web UI (stdlib http server + a Vue page built from `frontend/` with Vite into `ui/static/`), `python -m ams2kit ui` |
