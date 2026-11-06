@@ -84,7 +84,7 @@ def _check_sound(project, gamedir, add):
         same = sorted({c for b in ours for c in sound.cars_using(gamedir, info["banks"].get(b.rsplit("/", 1)[-1], {}).get("path", ""))})
         add(WARN, f"replaced samples: the rebuilt banks keep the FMOD ids of the originals, so don't race this car in the "
                   f"same session as {', '.join(same) or sound.kit_name(project)} (the game loads only one of the two; "
-                  "experimental, docs/16)")
+                  "docs/16)")
 
 
 def check(project, gamedir=None):

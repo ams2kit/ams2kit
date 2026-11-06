@@ -6,7 +6,7 @@
   build|art|render|doctor|install|uninstall|share|test|menu|export-blend|build-meshes <project dir>
   dump <physics file>                print a ShCB physics file as text
   tyres <project dir> [size] [--race] tyre sizes (donor / Specs) and the base tyre sets closest to them
-  sounds [filter]                    list the cars whose engine sound a car can use ([sound] kit)
+  sounds [filter] [--by-size]        cars whose engine sound a car can use ([sound] kit), with recordings to replace
   sound-extract <project dir>        decode the kit's banks to <project>/sound/original/ (docs/16)
 """
 import json, sys
@@ -28,10 +28,16 @@ def main(argv):
                 print(f"{c['name']:40s} {c['cls']:18s} {c['display']}")
         return
     if cmd == "sounds":
-        flt = argv[1].lower() if len(argv) > 1 else ""
-        for k in actions.sound_kits()["kits"]:
-            if flt in (k["name"] + k["display"] + k["engine"]).lower():
-                print(f"{k['name']:40s} {k['cls']:18s} {k['engine']}")
+        args = [a for a in argv[1:] if a != "--by-size"]
+        flt = args[0].lower() if args else ""
+        ks = [k for k in actions.sound_kits()["kits"] if flt in (k["name"] + k["display"] + k["engine"]).lower()]
+        if "--by-size" in argv:        # smallest first: fewest recordings to replace
+            ks.sort(key=lambda k: (k.get("samples") is None, k.get("samples") or 0, k.get("seconds") or 0))
+        print(f"{'car':40s} {'class':18s} {'samples':>7s} {'seconds':>7s}  engine")
+        for k in ks:
+            n = "?" if k.get("samples") is None else str(k["samples"])
+            s = "?" if k.get("seconds") is None else f"{k['seconds']:.0f}"
+            print(f"{k['name']:40s} {k['cls']:18s} {n:>7s} {s:>7s}  {k['engine']}{'  (vorbis)' if k.get('vorbis') else ''}")
         return
     if cmd == "new":
         root, name, donor = Path(argv[1]), argv[2], argv[3]

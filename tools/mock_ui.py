@@ -55,6 +55,18 @@ DONORS = {
     "drivelines": ["RWD_Mock_Open", "RWD_Mock_LSD", "AWD_Mock"],
 }
 
+# Sound page kit list (sound.kits): samples/seconds = distinct recordings in the kit's own engine banks
+SOUND_KITS = [
+    {"name": n, "display": d, "cls": c, "engine": f"{n}_EngineExt", "samples": s, "seconds": t, "vorbis": v,
+     "banks": [f"Audio/AMS2/Vehicles/Sort/M/{b}", f"Audio/AMS2/Vehicles/Sort/M/{b}_AI"]}
+    for n, d, c, s, t, v, b in [
+        ("mock_donor_v8", "Mock Donor V8", "GT3", 31, 140.0, False, "Mock_V8"),
+        ("mock_donor_i4", "Mock Donor I4", "Street", 25, 171.8, False, "Mock_I4"),
+        ("mock_proto", "Mock Prototype", "Group C", 17, 91.3, False, "Mock_Proto"),
+        ("mock_turbo", "Mock Turbo GT", "GT3", 17, 73.9, True, "Mock_Turbo"),
+        ("mock_formula", "Mock Formula V10", "F-V10", 92, 452.3, False, "Mock_V10"),
+    ]]
+
 # a few rows for the "All fields" tab: (kind, key, name, unit, help, donor value)
 FIELDS = [
     ("engine", "8b0ab771", "RPMTorque", "rpm, Nm, Nm", "Torque table row (rpm, engine braking, torque).", None),
@@ -201,6 +213,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, project_info(q["path"]))
         if u.path == "/api/physics":
             return self._send(200, physics(project_mod.Project(q["path"])))
+        if u.path == "/api/sound/kits":
+            return self._send(200, {"kits": SOUND_KITS})
+        if u.path == "/api/sound":
+            return self._send(200, {"kit": project_mod.Project(q["path"]).cfg["sound"]["kit"] or "mock_donor_v8",
+                                    "extracted": None, "stale": False, "dir": "", "replaced": 0, "vgmstream": False})
         if u.path == "/api/job":
             since = int(q.get("since", 0))
             return self._send(200, {"running": JOB["running"], "log": JOB["log"][since:], "error": JOB["error"], "result": JOB["result"]})

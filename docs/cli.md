@@ -19,7 +19,7 @@
 | `test <project> [seconds]` | Start the game, let the AI drive, log telemetry, take screenshots. |
 | `menu <project>` | Start the game and screenshot the car-select menus. |
 | `tyres <project> [size [rear]] [--race]` | Donor/Specs tyre sizes and the closest base tyre sets. |
-| `sounds [filter]` | List the cars whose engine sound a car can use (`[sound] kit`). |
+| `sounds [filter] [--by-size]` | List the cars whose engine sound a car can use (`[sound] kit`), with how many recordings each has (`--by-size`: fewest first). |
 | `sound-extract <project>` | Decode the kit's engine banks to `sound\original\` as WAVs ([16](16-sound.md)). |
 | `dump <physics file>` | Print a ShCB physics file (`.edfbin`, `.cdfbin`, ...) as text. |
 

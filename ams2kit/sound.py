@@ -104,11 +104,36 @@ def car_csd(gamedir, car):
         return r.read(hits[0]) if hits else None
 
 
+def engine_size(gamedir, banks, _cache={}):
+    """Size of a kit's own engine sound: {samples, seconds, vorbis}. The main and _AI banks hold mostly the
+    same recordings, so samples counts distinct names: roughly what a modder records to replace them all.
+    vorbis: some need vgmstream-cli to extract. None when a bank can't be read."""
+    named = {}
+    vorbis = False
+    for b in own_banks(banks):
+        if b not in _cache:
+            try:
+                bk = Bank(bank_file(gamedir, b).read_bytes())
+                _cache[b] = ({s["name"]: s["frames"] / s["rate"] for _, _, s in bk.samples() if s["rate"]},
+                             any(f["mode"] == MODE_VORBIS for f in bk.fsbs))
+            except (OSError, ValueError, struct.error):
+                _cache[b] = None
+        if _cache[b] is None:
+            return None
+        for n, sec in _cache[b][0].items():
+            named[n.lower()] = max(sec, named.get(n.lower(), 0))
+        vorbis |= _cache[b][1]
+    return {"samples": len(named), "seconds": round(sum(named.values()), 1), "vorbis": vorbis} if named else None
+
+
 def kits(gamedir, refresh=False, log=print):
-    """Every car's sound: [{name, display, cls, banks, engine}], cached in the data dir."""
+    """Every car's sound: [{name, display, cls, banks, engine, samples, seconds, vorbis}], cached in the data
+    dir (engine_size: how much there is to record when replacing it)."""
     cache = game.DATA_DIR / "sound_kits.json"
     if cache.exists() and not refresh:
-        return json.loads(cache.read_text(encoding="utf-8"))
+        out = json.loads(cache.read_text(encoding="utf-8"))
+        if all("samples" in k for k in out):          # caches from before engine_size are rebuilt
+            return out
     out = []
     cars = game.list_cars(gamedir)
     log(f"reading the sound setup of {len(cars)} cars...")
@@ -121,8 +146,10 @@ def kits(gamedir, refresh=False, log=print):
             continue
         strings = read_csd(data)
         engine = next((s for s in strings if s.endswith("_EngineExt")), next((s for s in strings if s.startswith("event:/")), ""))
-        out.append({"name": c["name"], "display": c["display"], "cls": c["cls"], "banks": csd_banks(data),
-                    "engine": engine.rsplit("/", 1)[-1]})
+        banks = csd_banks(data)
+        size = engine_size(gamedir, banks) or {"samples": None, "seconds": None, "vorbis": False}
+        out.append({"name": c["name"], "display": c["display"], "cls": c["cls"], "banks": banks,
+                    "engine": engine.rsplit("/", 1)[-1], **size})
     game.DATA_DIR.mkdir(parents=True, exist_ok=True)
     cache.write_text(json.dumps(out, indent=1), encoding="utf-8")
     return out

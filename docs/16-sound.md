@@ -36,6 +36,14 @@ A **kit** is another car's whole csdbin, copied over the car-named one: banks, e
 parameters together (they belong to that engine). `[sound] kit = "<car name>"`, or the Sound page.
 `sound.kits()` reads every car's csdbin once and caches the list in `%LOCALAPPDATA%\ams2kit\sound_kits.json`.
 
+Each kit also records its **size** (`sound.engine_size`): `samples` = distinct recordings in its own
+engine banks (the main and `_AI` banks hold mostly the same names, so this is roughly what you record to
+replace them all), `seconds` = their total length, `vorbis` = some need `vgmstream-cli` to extract.
+`ams2kit sounds --by-size` and the Sound page's "Fewest samples to replace" sort list the smallest first.
+Over 267 cars (2026-11): 17 to 92 samples; smallest the Nissan GT-R Nismo GT3, Porsche 962C, Corvette
+C5-R and Corvette GTP (17); among street cars the Camaro SS (25). Reading every bank takes about 1.5 min,
+once.
+
 Not yet verified in game: that the game reads the car-named csdbin rather than the donor-path one
 (both are in our pak). **[guess, needs an in-game test]**
 
@@ -76,7 +84,13 @@ previous frame within a median 17 LSB of it on the Veneno bank (a wrong table gi
 Vorbis needs a real decoder: ams2kit hands single-subsound FSB5 files to `vgmstream-cli` when it is set
 in Setup (optional).
 
-## Replacing samples [file; in game: untested]
+## Replacing samples [proven]
+
+**Proven in game (2026-11-06):** the BYD Seal on the Porsche 962C kit with all 31 recordings (962C 15,
+962C_AI 16) replaced by a synthesised electric-motor whine plays the whine in game. The recordings kept
+their length, loop and loudness; the whine pitch follows each recording's measured engine pitch (×4.5),
+so the kit's rpm crossfades work unchanged. Most kit recordings have no loop point (the events loop
+them), so replacements should be seamless over their whole length.
 
 `sound.rebuild_bank` keeps the bank byte for byte and only:
 1. appends a new FSB5 block with the replacement samples as **PCM16** (FMOD plays any FSB codec);

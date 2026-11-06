@@ -79,7 +79,7 @@ Work in progress (v0.1.0). It works end to end for the donors it was developed w
 
 - own textures work through clones of donor materials; livery designs are not supported (plain colours);
 - interior and collision shape stay the donor's; engine sound can come from any car (samples
-  replaceable, experimental);
+  replaceable);
 - electric cars are emulated through the engine model;
 - tested on a handful of donors only; game updates can break it.
 

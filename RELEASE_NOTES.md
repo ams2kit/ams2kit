@@ -19,8 +19,9 @@ close to the source model in game, with working brake lights.
 - **Share a car.** `ams2kit share` (or the Build & install page) makes a zip with an installer, so
   friends can install your car without ams2kit.
 - **Engine sounds.** A car can use any installed car's engine sound (new Sound step,
-  `[sound] kit`). Replacing single samples with your own WAVs is experimental and *not yet tested in
-  game*.
+  `[sound] kit`). Single samples can be replaced with your own WAVs: *tested in game* by replacing every
+  recording of the BYD Seal's kit with an electric-motor whine. `sounds --by-size` and the Sound page
+  list the kits with the fewest recordings to replace.
 
 ## UI
 
@@ -61,5 +62,4 @@ close to the source model in game, with working brake lights.
 ## Known gaps
 
 - A third brake light that the source model keeps in its interior is not mapped yet.
-- Sound sample replacement is untested in game.
 - Brake-caliper far LODs are not derived.

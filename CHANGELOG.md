@@ -29,7 +29,9 @@ First public version.
 ### Sound
 
 - Sound kits: a car can use any installed car's engine sound (`[sound] kit`, Sound step, `sounds`).
-- Sample replacement (experimental): `sound-extract` decodes the kit's engine banks to WAVs (FADPCM
+- Kit sizes: distinct recordings and seconds per kit, so a modder can pick the kit with the fewest samples
+  to replace (`sounds --by-size`, the Sound page's sort).
+- Sample replacement (proven in game on the BYD Seal): `sound-extract` decodes the kit's engine banks to WAVs (FADPCM
   natively, Vorbis through an optional `vgmstream-cli`); WAVs in `sound/replace/<bank>/` are packed into
   a copy of the bank as PCM and installed under `Audio\AMS2KIT\<car>\` (docs/16).
 - Doctor checks the csdbin's engine banks exist and warns about cars sharing a replaced bank.

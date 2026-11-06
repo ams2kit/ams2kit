@@ -5,7 +5,7 @@ import { store, saveCfg } from "../store.js";
 import { runJob } from "../job.js";
 
 const p = computed(() => store.project);
-const kits = ref(null), info = ref(null), filter = ref(""), error = ref("");
+const kits = ref(null), info = ref(null), filter = ref(""), error = ref(""), sortBy = ref("class");
 
 async function load() {
   info.value = await api("/api/sound?path=" + encodeURIComponent(store.projectPath));
@@ -20,8 +20,12 @@ const current = computed(() => p.value.cfg.sound.kit || donor.value);
 const engineBank = k => k.banks.find(b => b.includes("/Sort/") || b.includes("/Engine/")) || "";
 const shown = computed(() => {
   const f = filter.value.toLowerCase();
-  return (kits.value || []).filter(k => (k.display + k.name + k.cls + k.engine).toLowerCase().includes(f));
+  const rows = (kits.value || []).filter(k => (k.display + k.name + k.cls + k.engine).toLowerCase().includes(f));
+  // fewest recordings first: the least work when replacing every sample with your own
+  if (sortBy.value === "size") return [...rows].sort((a, b) => (a.samples ?? 1e9) - (b.samples ?? 1e9) || (a.seconds ?? 0) - (b.seconds ?? 0));
+  return rows;
 });
+const sizeText = k => k.samples == null ? "" : `${k.samples} samples · ${Math.round(k.seconds)} s`;
 // cars that share the engine banks sound the same
 const sharing = computed(() => {
   const n = {};
@@ -62,21 +66,27 @@ const fmtLoop = r => r.loop ? `${(r.loop[0] / r.rate).toFixed(2)}–${(r.loop[1]
   <div class="card">
     <div class="row" style="margin-bottom:10px">
       <input v-model="filter" placeholder="Search cars or engines..." style="max-width:280px">
+      <select v-model="sortBy" style="max-width:230px" title="Samples: distinct recordings in the kit's own engine banks">
+        <option value="class">Sort by class</option><option value="size">Fewest samples to replace</option>
+      </select>
       <span class="status">Using <b>{{ current }}</b>{{ p.cfg.sound.kit ? "" : " (the donor)" }}</span>
       <button v-if="p.cfg.sound.kit" class="ghost small" @click="pick(donor)">Back to the donor's sound</button>
     </div>
     <div class="donors">
       <div v-if="error" style="padding:14px">{{ error }}</div>
-      <div v-else-if="!kits" style="padding:14px">Reading every car's sound setup (first time only, about 15 s)...</div>
-      <div v-for="k in shown" v-else :key="k.name" class="donor" :class="{ sel: current.toLowerCase() === k.name.toLowerCase() }" @click="pick(k.name)">
+      <div v-else-if="!kits" style="padding:14px">Reading every car's sound setup (first time only, about 1-2 minutes)...</div>
+      <div v-for="k in shown" v-else :key="k.name" class="donor kit" :class="{ sel: current.toLowerCase() === k.name.toLowerCase() }" @click="pick(k.name)">
         <span><b>{{ k.display }}</b> <small>{{ k.engine }}</small></span><small>{{ k.cls }}</small>
+        <small :title="k.vorbis ? 'Some samples are Vorbis: extracting them needs vgmstream-cli' : 'Distinct recordings in the kit\'s engine banks'">
+          {{ sizeText(k) }}{{ k.vorbis ? " *" : "" }}</small>
         <small :title="engineBank(k)">{{ sharing[engineBank(k)] > 1 ? `shared by ${sharing[engineBank(k)]} cars` : "" }}</small>
       </div>
     </div>
     <p class="status" style="margin-top:10px">A new kit applies on the next Build. To hear one, drive that car in the game.</p>
+    <p class="help">Samples: how many recordings you would make to replace the whole engine sound (* some need vgmstream-cli to extract).</p>
   </div>
 
-  <h2>Replace samples <small class="status">experimental</small></h2>
+  <h2>Replace samples</h2>
   <div class="card">
     <ol class="steps-howto">
       <li><b>Extract the kit's samples</b> to <code>sound/original/</code> as WAV files (with their loop points).
